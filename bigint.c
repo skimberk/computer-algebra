@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
 
 struct BigInt {
     int sign;
@@ -255,6 +256,76 @@ struct BigInt *multiplyBigInt(struct BigInt *x, struct BigInt *y) {
     return out;
 }
 
+struct BigInt *shiftRightBigInt(struct BigInt *x, unsigned int places) {
+    validateBigInt(x);
+
+    unsigned int xBlocks = x->numBlocksUsed;
+    assert(xBlocks > places);
+    unsigned int newNumBlocks = xBlocks - places;
+    
+    struct BigInt *out = createBigInt(0);
+
+    while (out->numBlocks <= newNumBlocks) {
+        growBigInt(out);
+    }
+
+    for (unsigned int i = 0; i < newNumBlocks; i++) {
+        out->blocks[i] = x->blocks[i + places];
+    }
+    out->numBlocksUsed = newNumBlocks;
+
+    return out;
+}
+
+struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
+    validateBigInt(x);
+    validateBigInt(y);
+    assert(!isZeroBigInt(y));
+
+    uint32_t d = 1;
+    if (y->blocks[y->numBlocksUsed - 1] < UINT32_MAX / 2 + 1) {
+        d = UINT32_MAX / (y->blocks[y->numBlocksUsed - 1] + 1) + 1;
+    }
+    struct BigInt *temp = createBigInt(d);
+    x = multiplyBigInt(x, temp);
+    y = multiplyBigInt(y, temp);
+
+    unsigned int xBlocks = x->numBlocksUsed;
+    unsigned int yBlocks = y->numBlocksUsed;
+    unsigned int n = yBlocks;
+    unsigned int m = xBlocks - n;
+
+    struct BigInt *out = createBigInt(0);
+    struct BigInt *u = shiftRightBigInt(x, m);
+    struct BigInt *w;
+
+    unsigned int j;
+    for (unsigned int i = 0; i < m + 1; i++) {
+        j = m - j;
+        if (u->blocks[n] == y->blocks[n - 1]) {
+            q->blocks[j] = UINT32_MAX;
+        } else {
+            q->blocks[j] = u[n - 1] / y[n - 1];
+        }
+
+        temp->blocks[0] = q->blocks[j];
+        w = multiplyBigInt(temp, y);
+
+        while (compareAbsoluteBigInt(w, u) == 1) {
+            q->blocks[j]--;
+
+        }
+
+        freeBigInt(w);
+    }
+
+    freeBigInt(temp);
+    freeBigInt(x);
+    freeBigInt(y);
+
+    return out;
+}
+
 void printBigInt(struct BigInt *x) {
     validateBigInt(x);
 
@@ -336,6 +407,14 @@ int main (int argc, char** argv) {
         f = multiplyBigInt(f, g);
         printBigInt(f); printf("\n");
     }
+
+    for (int i = 0; i < 15; i++) {
+        f = shiftRightBigInt(f, 1);
+        printBigInt(f); printf("\n");
+    }
+
+    b->blocks[0]=65537;
+    printBigInt(multiplyBigInt(b, b)); printf("\n");
 
     freeBigInt(a);
     freeBigInt(b);
