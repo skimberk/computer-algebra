@@ -10,6 +10,8 @@ struct BigInt {
     uint32_t *blocks;
 };
 
+void printBigInt(struct BigInt *x);
+
 struct BigInt* createBigInt(uint32_t value) {
     struct BigInt *x = malloc(sizeof(struct BigInt));
     x->sign = 1;
@@ -295,25 +297,64 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     unsigned int n = yBlocks;
     unsigned int m = xBlocks - n;
 
-    struct BigInt *out = createBigInt(0);
+    struct BigInt *q = createBigInt(0);
+    struct BigInt *b = createBigInt(0);
+    growBigInt(b);
+    b->numBlocksUsed++;
+    b->blocks[1] = 1;
     struct BigInt *u = shiftRightBigInt(x, m);
     struct BigInt *w;
+    struct BigInt *swap;
+    struct BigInt *r = createBigInt(0);
+    uint32_t tempBlock;
+    unsigned int uUsed;
 
     unsigned int j;
     for (unsigned int i = 0; i < m + 1; i++) {
-        j = m - j;
-        if (u->blocks[n] == y->blocks[n - 1]) {
-            q->blocks[j] = UINT32_MAX;
+        j = m - i;
+        uUsed = u->numBlocksUsed;
+        if ((uUsed <= n && y->blocks[n - 1] == 0) || (uUsed > n && u->blocks[n] == y->blocks[n - 1])) {
+            tempBlock = UINT32_MAX;
+        } else if (uUsed >= n) {
+            tempBlock = u->blocks[n - 1] / y->blocks[n - 1];
         } else {
-            q->blocks[j] = u[n - 1] / y[n - 1];
+            tempBlock = 0;
         }
 
-        temp->blocks[0] = q->blocks[j];
+        temp->blocks[0] = tempBlock;
         w = multiplyBigInt(temp, y);
 
         while (compareAbsoluteBigInt(w, u) == 1) {
-            q->blocks[j]--;
+            tempBlock--;
+            swap = w;
+            y->sign *= -1;
+            w = addBigInt(w, y);
+            y->sign *= -1;
+            freeBigInt(swap);
+        }
 
+        if (tempBlock != 0) {
+            while (q->numBlocks <= j) {
+                growBigInt(q);
+                q->numBlocksUsed = j + 1;
+            }
+        }
+        if (j < q->numBlocksUsed) {
+            q->blocks[j] = tempBlock;
+        }
+
+        freeBigInt(r);
+        w->sign *= -1;
+        r = addBigInt(u, w);
+        w->sign *= -1;
+
+        if (j > 0) {
+            freeBigInt(u);
+            u = multiplyBigInt(r, b);
+            swap = u;
+            temp->blocks[0] = x->blocks[j - 1];
+            u = addBigInt(u, temp);
+            freeBigInt(swap);
         }
 
         freeBigInt(w);
@@ -322,8 +363,14 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     freeBigInt(temp);
     freeBigInt(x);
     freeBigInt(y);
+    freeBigInt(b);
+    freeBigInt(u);
 
-    return out;
+    printf("r: "); printBigInt(r); printf("\n");
+    printf("q: "); printBigInt(q); printf("\n");
+    freeBigInt(r);
+
+    return q;
 }
 
 void printBigInt(struct BigInt *x) {
@@ -341,81 +388,89 @@ void printBigInt(struct BigInt *x) {
 }
 
 int main (int argc, char** argv) {
-    uint32_t x = 4294967295;
-    uint32_t y = 4294967295;
-    uint64_t result = (uint64_t)x * y;
-    uint32_t hi = result / UINT32_MAX;
-    uint32_t lo = result;
-    printf("max uint32: %u\n", UINT32_MAX);
-    printf("result: %lu\n", result);
-    printf("hi: %u\n", hi);
-    printf("lo: %u\n", lo);
+//    uint32_t x = 4294967295;
+//    uint32_t y = 4294967295;
+//    uint64_t result = (uint64_t)x * y;
+//    uint32_t hi = result / UINT32_MAX;
+//    uint32_t lo = result;
+//    printf("max uint32: %u\n", UINT32_MAX);
+//    printf("result: %lu\n", result);
+//    printf("hi: %u\n", hi);
+//    printf("lo: %u\n", lo);
+//
+//    struct BigInt *a = createBigInt(0);
+//    struct BigInt *b = createBigInt(4294967295);
+//    struct BigInt *c = createBigInt(0);
+//
+//    printf("comparison of a and b: %d\n", compareBigInt(a, b));
+//    printf("comparison of b and a: %d\n", compareBigInt(b, a));
+//    printf("comparison of a and a: %d\n", compareBigInt(a, a));
+//    printf("comparison of b and b: %d\n", compareBigInt(b, b));
+//
+//    printf("comparison of a and c: %d\n", compareBigInt(a, c));
+//    printf("comparison of c and a: %d\n", compareBigInt(c, a));
+//    growBigInt(c);
+//    printf("comparison of a and c: %d\n", compareBigInt(a, c));
+//    printf("comparison of c and a: %d\n", compareBigInt(c, a));
+//
+//    printBigInt(a); printf("\n");
+//    printBigInt(b); printf("\n");
+//
+//    for (int i = 0; i < 20; i++) {
+//        a = addBigInt(a, b);
+//        printBigInt(a); printf("\n");
+//    }
+//
+//    b->sign = -1;
+//	for (int i = 0; i < 40; i++) {
+//        a = addBigInt(a, b);
+//        printBigInt(a); printf("\n");
+//    }
+//    
+//    b->sign = 1;
+//	for (int i = 0; i < 40; i++) {
+//        a = addBigInt(b, a);
+//        printBigInt(a); printf("\n");
+//    }
+//    
+//    b->sign = -1;
+//    for (int i = 0; i < 40; i++) {
+//        a = addBigInt(b, a);
+//        printBigInt(a); printf("\n");
+//    }
+//
+//    struct BigInt *d = createBigInt(2);
+//    struct BigInt *e = createBigInt(2);
+//    e->sign = -1;
+//    for (int i = 0; i < 100; i++) {
+//        d = multiplyBigInt(d, e);
+//        printBigInt(d); printf("\n");
+//    }
+//
+//    struct BigInt *f = createBigInt(1);
+//    struct BigInt *g = createBigInt(0);
+//    for (int i = 1; i < 101; i++) {
+//        g->blocks[0] = i;
+//        f = multiplyBigInt(f, g);
+//        printBigInt(f); printf("\n");
+//    }
+//
+//    for (int i = 0; i < 15; i++) {
+//        f = shiftRightBigInt(f, 1);
+//        printBigInt(f); printf("\n");
+//    }
+//
+//    b->blocks[0]=65537;
+//    printBigInt(multiplyBigInt(b, b)); printf("\n");
+//    printBigInt(divideBigInt(b, b)); printf("\n");
+//
+//    freeBigInt(a);
+//    freeBigInt(b);
+//    freeBigInt(c);
 
-    struct BigInt *a = createBigInt(0);
-    struct BigInt *b = createBigInt(4294967295);
-    struct BigInt *c = createBigInt(0);
-
-    printf("comparison of a and b: %d\n", compareBigInt(a, b));
-    printf("comparison of b and a: %d\n", compareBigInt(b, a));
-    printf("comparison of a and a: %d\n", compareBigInt(a, a));
-    printf("comparison of b and b: %d\n", compareBigInt(b, b));
-
-    printf("comparison of a and c: %d\n", compareBigInt(a, c));
-    printf("comparison of c and a: %d\n", compareBigInt(c, a));
-    growBigInt(c);
-    printf("comparison of a and c: %d\n", compareBigInt(a, c));
-    printf("comparison of c and a: %d\n", compareBigInt(c, a));
-
-    printBigInt(a); printf("\n");
-    printBigInt(b); printf("\n");
-
-    for (int i = 0; i < 20; i++) {
-        a = addBigInt(a, b);
-        printBigInt(a); printf("\n");
-    }
-
-    b->sign = -1;
-	for (int i = 0; i < 40; i++) {
-        a = addBigInt(a, b);
-        printBigInt(a); printf("\n");
-    }
-    
-    b->sign = 1;
-	for (int i = 0; i < 40; i++) {
-        a = addBigInt(b, a);
-        printBigInt(a); printf("\n");
-    }
-    
-    b->sign = -1;
-    for (int i = 0; i < 40; i++) {
-        a = addBigInt(b, a);
-        printBigInt(a); printf("\n");
-    }
-
-    struct BigInt *d = createBigInt(2);
-    struct BigInt *e = createBigInt(2);
-    e->sign = -1;
-    for (int i = 0; i < 100; i++) {
-        d = multiplyBigInt(d, e);
-        printBigInt(d); printf("\n");
-    }
-
-    struct BigInt *f = createBigInt(1);
-    struct BigInt *g = createBigInt(0);
-    for (int i = 1; i < 101; i++) {
-        g->blocks[0] = i;
-        f = multiplyBigInt(f, g);
-        printBigInt(f); printf("\n");
-    }
-
-    for (int i = 0; i < 15; i++) {
-        f = shiftRightBigInt(f, 1);
-        printBigInt(f); printf("\n");
-    }
-
-    b->blocks[0]=65537;
-    printBigInt(multiplyBigInt(b, b)); printf("\n");
-
+    struct BigInt *a = createBigInt(3);
+    struct BigInt *b = createBigInt(4);
+    struct BigInt *c = divideBigInt(a, b);
     freeBigInt(a);
     freeBigInt(b);
     freeBigInt(c);
