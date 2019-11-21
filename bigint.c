@@ -298,17 +298,42 @@ struct BigInt *shiftRightBigInt(struct BigInt *x, unsigned int places) {
     unsigned int newNumBlocks = xBlocks - places;
     
     struct BigInt *out = createBigInt(0);
-
-    while (out->numBlocks <= newNumBlocks) {
-        growBigInt(out);
-    }
+    useBlocksBigInt(out, newNumBlocks);
 
     for (unsigned int i = 0; i < newNumBlocks; i++) {
         out->blocks[i] = x->blocks[i + places];
     }
-    out->numBlocksUsed = newNumBlocks;
 
+    out->sign = x->sign;
     return out;
+}
+
+struct BigInt *shiftLeftBigInt(struct BigInt *x, unsigned int places) {
+    validateBigInt(x);
+
+    struct BigInt *out = createBigInt(0);
+    useBlocksBigInt(out, x->numBlocksUsed + places);
+
+    for (unsigned int i = 0; i < x->numBlocksUsed; i++) {
+        out->blocks[i + places] = x->blocks[i];
+    }
+
+    out->sign = x->sign;
+    return out;
+}
+
+struct BigInt *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
+    validateBigInt(x);
+    assert(y != 0);
+
+    unsigned int xBlocks = x->numBlocksUsed;
+    struct BigInt *q = createBigInt(0);
+    struct BigInt *r = copyBigInt(x);
+
+    unsigned int j;
+    for (unsigned int i = 0; i < xBlocks; i++) {
+        j = xBlocks - i - 1;
+    }
 }
 
 struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
@@ -324,33 +349,51 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     x = multiplyBigInt(x, temp);
     y = multiplyBigInt(y, temp);
 
+    printf("d: %u\n", d);
+    printf("x: "); printBigInt(x); printf("\n");
+    printf("y: "); printBigInt(y); printf("\n");
+
     unsigned int xBlocks = x->numBlocksUsed;
     unsigned int yBlocks = y->numBlocksUsed;
     unsigned int n = yBlocks;
     unsigned int m = xBlocks - n;
 
     struct BigInt *q = createBigInt(0);
-    struct BigInt *b = createBigInt(0);
-    growBigInt(b);
-    b->numBlocksUsed++;
-    b->blocks[1] = 1;
     struct BigInt *u = shiftRightBigInt(x, m);
     struct BigInt *w;
     struct BigInt *r = createBigInt(0);
+
     uint32_t tempBlock;
-    unsigned int uUsed;
+
+    uint32_t un;
+    uint32_t un1;
 
     unsigned int j;
     for (unsigned int i = 0; i < m + 1; i++) {
         j = m - i;
-        uUsed = u->numBlocksUsed;
-        if ((uUsed <= n && y->blocks[n - 1] == 0) || (uUsed > n && u->blocks[n] == y->blocks[n - 1])) {
-            tempBlock = UINT32_MAX;
-        } else if (uUsed >= n) {
-            tempBlock = u->blocks[n - 1] / y->blocks[n - 1];
+
+        if (u->numBlocksUsed < n) {
+            un = 0;
+            un1 = 0;
+        } else if (u->numBlocksUsed == n) {
+            un = 0;
+            un1 = u->blocks[n - 1];
         } else {
-            tempBlock = 0;
+            un = u->blocks[n];
+            un1 = u->blocks[n - 1];
         }
+
+        printf("un: %u\n", un);
+        printf("un1: %u\n", un1);
+        printf("yn1: %u\n", y->blocks[n - 1]);
+
+        if (un == y->blocks[n - 1]) {
+            tempBlock = UINT32_MAX;
+        } else {
+            tempBlock = ((uint64_t)un * ((uint64_t)UINT32_MAX + 1) + un1) / y->blocks[n - 1];
+        }
+
+        printf("tempBlock: %u\n", tempBlock);
 
         temp->blocks[0] = tempBlock;
         w = multiplyBigInt(temp, y);
@@ -372,7 +415,7 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
 
         if (j > 0) {
             temp->blocks[0] = x->blocks[j - 1];
-            replaceBigInt(&u, multiplyBigInt(r, b));
+            replaceBigInt(&u, shiftLeftBigInt(r, 1));
             replaceBigInt(&u, addBigInt(u, temp));
         }
 
@@ -382,7 +425,6 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     freeBigInt(temp);
     freeBigInt(x);
     freeBigInt(y);
-    freeBigInt(b);
     freeBigInt(u);
 
     printf("r: "); printBigInt(r); printf("\n");
@@ -390,33 +432,6 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     freeBigInt(r);
 
     return q;
-}
-
-void divideBigIntv2(struct BigInt *u, struct BigInt *v) {
-    validateBigInt(u);
-    validateBigInt(v);
-
-    // Handle base cases
-    // Going forward, let's assume x and y are both positive
-    // and x > y
-
-    uint32_t d = 1;
-    if (v->blocks[v->numBlocksUsed - 1] < UINT32_MAX / 2 + 1) {
-        d = UINT32_MAX / (v->blocks[v->numBlocksUsed - 1] + 1) + 1;
-    }
-    struct BigInt *temp = createBigInt(d);
-    u = multiplyBigInt(u, temp);
-    v = multiplyBigInt(v, temp);
-
-    unsigned int uBlocks = u->numBlocksUsed;
-    unsigned int vBlocks = v->numBlocksUsed;
-    unsigned int n = vBlocks;
-    unsigned int m = uBlocks - n;
-
-    unsigned int j;
-    for (unsigned int i = 0; i < m + 1; i++) {
-        j = m - i;
-    }
 }
 
 void printBigInt(struct BigInt *x) {
@@ -519,12 +534,12 @@ int main (int argc, char** argv) {
     freeBigInt(f);
     freeBigInt(g);
 
-//    struct BigInt *a = createBigInt(3);
-//    struct BigInt *b = createBigInt(4);
-//    struct BigInt *c = divideBigInt(a, b);
-//    freeBigInt(a);
-//    freeBigInt(b);
-//    freeBigInt(c);
+    a = createBigInt(13);
+    b = createBigInt(5);
+    c = divideBigInt(a, b);
+    freeBigInt(a);
+    freeBigInt(b);
+    freeBigInt(c);
 
     return 0;
 }
