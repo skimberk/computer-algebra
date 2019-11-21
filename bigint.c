@@ -93,6 +93,20 @@ void useBlocksBigInt(struct BigInt *x, unsigned int numBlocks) {
     }
 }
 
+struct BigInt *copyBigInt(struct BigInt *x) {
+    struct BigInt *out = malloc(sizeof(struct BigInt));
+    out->sign = x->sign;
+    out->numBlocks = x->numBlocks;
+    out->numBlocksUsed = x->numBlocksUsed;
+    out->blocks = malloc(x->numBlocks * sizeof(uint32_t));
+
+    for (unsigned int i = 0; i < x->numBlocksUsed; i++) {
+        out->blocks[i] = x->blocks[i];
+    }
+
+    return out;
+}
+
 void flipSignBigInt(struct BigInt *x) {
     if (!isZeroBigInt(x)) {
         x->sign *= -1;
@@ -334,6 +348,9 @@ struct BigInt *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
     for (unsigned int i = 0; i < xBlocks; i++) {
         j = xBlocks - i - 1;
     }
+
+    freeBigInt(r);
+    return q;
 }
 
 struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
