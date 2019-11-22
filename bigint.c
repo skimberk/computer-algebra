@@ -385,6 +385,7 @@ struct BigIntDigitPair *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
 
     struct BigInt *q = createBigInt(0);
     struct BigInt *u = shiftRightBigInt(x, m);
+    u->sign = 1; // We always divide positive numbers, then set sign later
     struct BigInt *w;
     struct BigInt *r = createBigInt(0);
 
@@ -457,6 +458,12 @@ struct BigIntDigitPair *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
     uint32_t rDigit = r->blocks[0];
     freeBigInt(r);
 
+    assert(rDigit < y);
+    q->sign = x->sign;
+    if (x->sign == -1 && rDigit != 0) {
+        rDigit = y - rDigit;
+    }
+
     return createBigIntDigitPair(q, rDigit);
 }
 struct BigIntPair *divideBigInt(struct BigInt *x, struct BigInt *y) {
@@ -469,8 +476,11 @@ struct BigIntPair *divideBigInt(struct BigInt *x, struct BigInt *y) {
         d = UINT32_MAX / (y->blocks[y->numBlocksUsed - 1] + 1) + 1;
     }
     struct BigInt *temp = createBigInt(d);
+    int sign = x->sign * y->sign;
     x = multiplyBigInt(x, temp);
     y = multiplyBigInt(y, temp);
+    x->sign = 1;
+    y->sign = 1;
 
 //    printf("d: %u\n", d);
 //    printf("x: "); printBigInt(x); printf("\n");
@@ -548,20 +558,46 @@ struct BigIntPair *divideBigInt(struct BigInt *x, struct BigInt *y) {
         freeBigInt(w);
     }
 
+//    printf("r: "); printBigInt(r); printf("\n");
+//    printf("q: "); printBigInt(q); printf("\n");
+
+    q->sign = sign;
+    if (sign == -1 && !isZeroBigInt(r)) {
+        replaceBigInt(&r, subtractBigInt(y, r));
+    }
+
+    struct BigIntDigitPair *pair = divideByDigitBigInt(r, d);
+    assert(pair->y == 0);
+    replaceBigInt(&r, pair->x);
+
+    free(pair);
     freeBigInt(temp);
     freeBigInt(x);
     freeBigInt(y);
     freeBigInt(u);
 
-    struct BigIntDigitPair *pair = divideByDigitBigInt(r, d);
-    assert(pair->y == 0);
-    replaceBigInt(&r, pair->x);
-    free(pair);
-
-//    printf("r: "); printBigInt(r); printf("\n");
-//    printf("q: "); printBigInt(q); printf("\n");
-
     return createBigIntPair(q, r);
+}
+
+struct BigInt *gcdBigInt(struct BigInt *x, struct BigInt *y) {
+    struct BigInt *u = copyBigInt(x);
+    struct BigInt *v = copyBigInt(y);
+    u->sign = 1;
+    v->sign = 1;
+
+    struct BigIntPair *pair;
+
+    while (!isZeroBigInt(v)) {
+        pair = divideBigInt(u, v);
+        replaceBigInt(&u, v);
+        replaceBigInt(&v, pair->y);
+
+        freeBigInt(pair->x);
+        free(pair);
+    }
+
+    freeBigInt(v);
+    return u;
 }
 
 void printBigIntDecimal(struct BigInt *x) {
@@ -580,6 +616,7 @@ void printBigIntDecimal(struct BigInt *x) {
     char *digits = malloc(approxDigits * sizeof(char));
 
     struct BigInt *q = copyBigInt(x);
+    q->sign = 1; // We already printed the negative sign if negative
     struct BigIntDigitPair *pair;
     unsigned int actualDigits = 0;
     while(!isZeroBigInt(q)) {
@@ -602,6 +639,16 @@ void printBigIntDecimal(struct BigInt *x) {
     }
 
     free(digits);
+}
+
+void printBigIntDigitPair(struct BigIntDigitPair *pair) {
+    printf("x: "); printBigIntDecimal(pair->x); printf("\n");
+    printf("y: %u\n", pair->y);
+}
+
+void printBigIntPair(struct BigIntPair *pair) {
+    printf("x: "); printBigIntDecimal(pair->x); printf("\n");
+    printf("y: "); printBigIntDecimal(pair->y); printf("\n");
 }
 
 void printBigInt(struct BigInt *x) {
@@ -704,10 +751,14 @@ int main (int argc, char** argv) {
         replaceBigInt(&f, multiplyBigInt(f, g));
     }
 
+    struct BigIntPair *pair;
+    struct BigIntDigitPair *digitPair;
+
     printBigIntDecimal(f); printf("\n");
     printBigIntDecimal(d); printf("\n");
-    replaceBigInt(&f, divideBigInt(f, d));
-    printBigIntDecimal(f); printf("\n");
+    pair = divideBigInt(f, d);
+    printBigIntPair(pair);
+    freeBigIntPair(pair);
 
 //    for (int i = 0; i < 15; i++) {
 //        replaceBigInt(&f, shiftRightBigInt(f, 1));
@@ -723,11 +774,14 @@ int main (int argc, char** argv) {
     freeBigInt(g);
 
     a = createBigInt(13);
+    a->sign = 1;
     b = createBigInt(5);
-    c = divideBigInt(a, b);
+    b->sign = -1;
+    pair = divideBigInt(a, b);
+    printBigIntPair(pair);
     freeBigInt(a);
     freeBigInt(b);
-    freeBigInt(c);
+    freeBigIntPair(pair);
 
     return 0;
 }
