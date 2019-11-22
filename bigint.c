@@ -590,7 +590,7 @@ struct BigInt *gcdBigInt(struct BigInt *x, struct BigInt *y) {
     while (!isZeroBigInt(v)) {
         pair = divideBigInt(u, v);
         replaceBigInt(&u, v);
-        replaceBigInt(&v, pair->y);
+        v = pair->y;
 
         freeBigInt(pair->x);
         free(pair);
@@ -760,6 +760,9 @@ int main (int argc, char** argv) {
     printBigIntPair(pair);
     freeBigIntPair(pair);
 
+    replaceBigInt(&c, gcdBigInt(f, d));
+    printf("gcd: "); printBigIntDecimal(c); printf("\n");
+
 //    for (int i = 0; i < 15; i++) {
 //        replaceBigInt(&f, shiftRightBigInt(f, 1));
 //        printBigInt(f); printf("\n");
@@ -773,15 +776,15 @@ int main (int argc, char** argv) {
     freeBigInt(f);
     freeBigInt(g);
 
-    a = createBigInt(13);
+    a = createBigInt(15);
     a->sign = 1;
     b = createBigInt(5);
-    b->sign = -1;
-    pair = divideBigInt(a, b);
-    printBigIntPair(pair);
+    b->sign = 1;
+    c = gcdBigInt(a, b);
+    printf("gcd: "); printBigIntDecimal(c); printf("\n");
     freeBigInt(a);
     freeBigInt(b);
-    freeBigIntPair(pair);
+    freeBigInt(c);
 
     return 0;
 }
