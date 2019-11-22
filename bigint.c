@@ -459,7 +459,7 @@ struct BigIntDigitPair *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
 
     return createBigIntDigitPair(q, rDigit);
 }
-struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
+struct BigIntPair *divideBigInt(struct BigInt *x, struct BigInt *y) {
     validateBigInt(x);
     validateBigInt(y);
     assert(!isZeroBigInt(y));
@@ -472,9 +472,9 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     x = multiplyBigInt(x, temp);
     y = multiplyBigInt(y, temp);
 
-    printf("d: %u\n", d);
-    printf("x: "); printBigInt(x); printf("\n");
-    printf("y: "); printBigInt(y); printf("\n");
+//    printf("d: %u\n", d);
+//    printf("x: "); printBigInt(x); printf("\n");
+//    printf("y: "); printBigInt(y); printf("\n");
 
     unsigned int xBlocks = x->numBlocksUsed;
     unsigned int yBlocks = y->numBlocksUsed;
@@ -506,9 +506,9 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
             un1 = u->blocks[n - 1];
         }
 
-        printf("un: %u\n", un);
-        printf("un1: %u\n", un1);
-        printf("yn1: %u\n", y->blocks[n - 1]);
+//        printf("un: %u\n", un);
+//        printf("un1: %u\n", un1);
+//        printf("yn1: %u\n", y->blocks[n - 1]);
 
         if (un == y->blocks[n - 1]) {
             tempBlock = UINT32_MAX;
@@ -516,13 +516,13 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
             tempBlock = ((uint64_t)un * ((uint64_t)UINT32_MAX + 1) + un1) / y->blocks[n - 1];
         }
 
-        printf("tempBlock: %u\n", tempBlock);
+//        printf("tempBlock: %u\n", tempBlock);
 
         temp->blocks[0] = tempBlock;
         w = multiplyBigInt(temp, y);
 
-        printf("w: "); printBigInt(w); printf("\n");
-        printf("temp: "); printBigInt(temp); printf("\n");
+//        printf("w: "); printBigInt(w); printf("\n");
+//        printf("temp: "); printBigInt(temp); printf("\n");
 
         while (compareAbsoluteBigInt(w, u) == 1) {
             tempBlock--;
@@ -553,11 +553,15 @@ struct BigInt *divideBigInt(struct BigInt *x, struct BigInt *y) {
     freeBigInt(y);
     freeBigInt(u);
 
-    printf("r: "); printBigInt(r); printf("\n");
-    printf("q: "); printBigInt(q); printf("\n");
-    freeBigInt(r);
+    struct BigIntDigitPair *pair = divideByDigitBigInt(r, d);
+    assert(pair->y == 0);
+    replaceBigInt(&r, pair->x);
+    free(pair);
 
-    return q;
+//    printf("r: "); printBigInt(r); printf("\n");
+//    printf("q: "); printBigInt(q); printf("\n");
+
+    return createBigIntPair(q, r);
 }
 
 void printBigIntDecimal(struct BigInt *x) {
@@ -591,9 +595,13 @@ void printBigIntDecimal(struct BigInt *x) {
         assert(actualDigits <= approxDigits);
     }
 
+    freeBigInt(q);
+
     for (unsigned int i = 0; i < actualDigits; i++) {
         printf("%c", digits[actualDigits - i - 1]);
     }
+
+    free(digits);
 }
 
 void printBigInt(struct BigInt *x) {
@@ -691,11 +699,14 @@ int main (int argc, char** argv) {
 
     struct BigInt *f = createBigInt(1);
     struct BigInt *g = createBigInt(0);
-    for (int i = 1; i < 10001; i++) {
+    for (int i = 1; i < 101; i++) {
         g->blocks[0] = i;
         replaceBigInt(&f, multiplyBigInt(f, g));
     }
 
+    printBigIntDecimal(f); printf("\n");
+    printBigIntDecimal(d); printf("\n");
+    replaceBigInt(&f, divideBigInt(f, d));
     printBigIntDecimal(f); printf("\n");
 
 //    for (int i = 0; i < 15; i++) {
