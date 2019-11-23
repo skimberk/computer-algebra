@@ -3,12 +3,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include "bigint.h"
-
-struct Fraction {
-    struct BigInt *n;
-    struct BigInt *d;
-};
+#include "fraction.h"
 
 struct Fraction *createFraction(struct BigInt *n, struct BigInt *d) {
     validateBigInt(n);
@@ -51,8 +46,8 @@ struct Fraction *createFromStringFraction(char *nStr, char *dStr) {
 
 struct Fraction *copyFraction(struct Fraction *x) {
     struct Fraction *out = malloc(sizeof(struct Fraction));
-    out->n = copyBigInt(x->d);
-    out->d = copyBigInt(x->n);
+    out->n = copyBigInt(x->n);
+    out->d = copyBigInt(x->d);
 
     return out;
 }
@@ -193,6 +188,7 @@ void printFraction(struct Fraction *f) {
     printBigIntDecimal(f->d);
 }
 
+/*
 int main (int argc, char** argv) {
 //    struct Fraction *f = createFromStringFraction("-479001600", "1048576");
 //    struct Fraction *f = createFromStringFraction("12312", "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000");
@@ -218,3 +214,4 @@ int main (int argc, char** argv) {
     freeFraction(f);
     freeFraction(f1);
 }
+*/
