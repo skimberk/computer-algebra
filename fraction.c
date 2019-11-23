@@ -49,6 +49,14 @@ struct Fraction *createFromStringFraction(char *nStr, char *dStr) {
     return out;
 }
 
+struct Fraction *copyFraction(struct Fraction *x) {
+    struct Fraction *out = malloc(sizeof(struct Fraction));
+    out->n = copyBigInt(x->d);
+    out->d = copyBigInt(x->n);
+
+    return out;
+}
+
 void freeFraction(struct Fraction *f) {
     freeBigInt(f->n);
     freeBigInt(f->d);
@@ -62,6 +70,16 @@ void replaceFraction (struct Fraction **x, struct Fraction *y) {
 
 // All operations assume that fractions are in simplest form
 
+void correctSignFraction(struct Fraction *x) {
+    // Keep sign on numerator
+    x->n->sign = x->n->sign * x->d->sign;
+    x->d->sign = 1;
+
+    if (isZeroBigInt(x->d)) {
+        x->d->sign = 1;
+    }
+}
+
 struct Fraction *invertFraction(struct Fraction *x) {
     assert(!isZeroBigInt(x->n));
 
@@ -72,6 +90,53 @@ struct Fraction *invertFraction(struct Fraction *x) {
     out->n->sign = out->d->sign;
     out->d->sign = 1;
 
+    return out;
+}
+
+struct Fraction *addFraction(struct Fraction *x, struct Fraction *y) {
+    struct BigInt *a = x->n;
+    struct BigInt *b = x->d;
+    struct BigInt *c = y->n;
+    struct BigInt *d = y->d;
+    struct BigInt *gcd = gcdBigInt(b, d);
+
+    struct BigIntPair *pair;
+
+    pair = divideBigInt(b, gcd);
+    assert(isZeroBigInt(pair->y));
+    struct BigInt *b1 = pair->x;
+    freeBigInt(pair->y);
+    free(pair);
+
+    pair = divideBigInt(d, gcd);
+    assert(isZeroBigInt(pair->y));
+    struct BigInt *d1 = pair->x;
+    freeBigInt(pair->y);
+    free(pair);
+
+    a = multiplyBigInt(a, d1);
+    c = multiplyBigInt(c, b1);
+
+    struct Fraction *out = malloc(sizeof(struct Fraction));
+    out->n = addBigInt(a, c);
+    out->d = multiplyBigInt(b1, d);
+
+    correctSignFraction(out);
+
+    freeBigInt(a);
+    freeBigInt(b1);
+    freeBigInt(c);
+    freeBigInt(d1);
+    freeBigInt(gcd);
+
+    return out;
+}
+
+struct Fraction *subtractFraction(struct Fraction *x, struct Fraction *y) {
+    struct Fraction *yNeg = copyFraction(y);
+    flipSignBigInt(y->n);
+    struct Fraction *out = addFraction(x, yNeg);
+    freeFraction(yNeg);
     return out;
 }
 
@@ -130,14 +195,26 @@ void printFraction(struct Fraction *f) {
 
 int main (int argc, char** argv) {
 //    struct Fraction *f = createFromStringFraction("-479001600", "1048576");
-    struct Fraction *f = createFromStringFraction("12312", "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000");
-    struct Fraction *f1 = invertFraction(f);
+//    struct Fraction *f = createFromStringFraction("12312", "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000");
+//    struct Fraction *f1 = invertFraction(f);
+    struct Fraction *f = createFromStringFraction("3", "5");
+    struct Fraction *f1 = createFromStringFraction("-3", "5");
 
     printFraction(f); printf("\n");
 
-    replaceFraction(&f, divideFraction(f, f));
+    replaceFraction(&f, subtractFraction(f, f1));
     printFraction(f); printf("\n");
 
+//    struct BigInt *a = createBigInt(1);
+//    struct BigInt *b = createBigInt(0);
+//    for (int i = 1; i < 10001; i++) {
+//        b->blocks[0] = i;
+//        replaceBigInt(&a, multiplyBigInt(a, b));
+//    }
+//    printBigIntDecimal(a); printf("\n");
+//    freeBigInt(a);
+//    freeBigInt(b);
+ 
     freeFraction(f);
     freeFraction(f1);
 }
