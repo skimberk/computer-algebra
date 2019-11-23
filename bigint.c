@@ -3,24 +3,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-struct BigInt {
-    int sign;
-    unsigned int numBlocks;
-    unsigned int numBlocksUsed;
-    uint32_t *blocks;
-};
-
-struct BigIntPair {
-    struct BigInt *x;
-    struct BigInt *y;
-};
-
-struct BigIntDigitPair {
-    struct BigInt *x;
-    uint32_t y;
-};
-
-void printBigInt(struct BigInt *x);
+#include "bigint.h"
 
 struct BigInt* createBigInt(uint32_t value) {
     struct BigInt *x = malloc(sizeof(struct BigInt));
@@ -379,6 +362,24 @@ struct BigIntDigitPair *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
     validateBigInt(x);
     assert(y != 0);
 
+    if (x->numBlocksUsed == 1) {
+        if (x->blocks[0] == 0) {
+            return createBigIntDigitPair(createBigInt(0), 0);
+        } else if (x->blocks[0] == y) {
+            struct BigInt *q = createBigInt(1);
+            q->sign = x->sign;
+            return createBigIntDigitPair(q, 0);
+        } else if (x->blocks[0] < y) {
+            if (x->sign == 1) {
+                return createBigIntDigitPair(createBigInt(0), x->blocks[0]);
+            } else {
+                struct BigInt *q = createBigInt(1);
+                q->sign = -1;
+                return createBigIntDigitPair(q, y - x->blocks[0]);
+            }
+        }
+    }
+
     unsigned int xBlocks = x->numBlocksUsed;
     unsigned int n = 1;
     unsigned int m = xBlocks - 1;
@@ -471,12 +472,41 @@ struct BigIntPair *divideBigInt(struct BigInt *x, struct BigInt *y) {
     validateBigInt(y);
     assert(!isZeroBigInt(y));
 
+    int sign = x->sign * y->sign;
+    int cmp = compareAbsoluteBigInt(x, y);
+
+    if (isZeroBigInt(x)) {
+        return createBigIntPair(createBigInt(0), createBigInt(0));
+    } else if (cmp == 0) {
+        struct BigInt *q = createBigInt(1);
+        q->sign = sign;
+        return createBigIntPair(q, createBigInt(0));
+    } else if (cmp == -1) {
+        if (sign == 1) {
+            struct BigInt *r = copyBigInt(x);
+            r->sign = 1;
+            return createBigIntPair(createBigInt(0), r);
+        } else {
+            struct BigInt *q = createBigInt(1);
+            q->sign = -1;
+
+            int xSign = x->sign;
+            int ySign = y->sign;
+            x->sign = 1;
+            y->sign = 1;
+            struct BigInt *r = subtractBigInt(y, x);
+            x->sign = ySign;
+            y->sign = ySign;
+
+            return createBigIntPair(q, r);
+        }
+    }
+
     uint32_t d = 1;
     if (y->blocks[y->numBlocksUsed - 1] < UINT32_MAX / 2 + 1) {
         d = UINT32_MAX / (y->blocks[y->numBlocksUsed - 1] + 1) + 1;
     }
     struct BigInt *temp = createBigInt(d);
-    int sign = x->sign * y->sign;
     x = multiplyBigInt(x, temp);
     y = multiplyBigInt(y, temp);
     x->sign = 1;
@@ -665,6 +695,7 @@ void printBigInt(struct BigInt *x) {
     }
 }
 
+/*
 int main (int argc, char** argv) {
     uint32_t x = 4294967295;
     uint32_t y = 4294967295;
@@ -754,9 +785,11 @@ int main (int argc, char** argv) {
     struct BigIntPair *pair;
     struct BigIntDigitPair *digitPair;
 
-    printBigIntDecimal(f); printf("\n");
     printBigIntDecimal(d); printf("\n");
-    pair = divideBigInt(f, d);
+    printBigIntDecimal(f); printf("\n");
+//    f->sign = -1;
+//    d->sign = -1;
+    pair = divideBigInt(d, f);
     printBigIntPair(pair);
     freeBigIntPair(pair);
 
@@ -776,7 +809,7 @@ int main (int argc, char** argv) {
     freeBigInt(f);
     freeBigInt(g);
 
-    a = createBigInt(15);
+    a = createBigInt(4);
     a->sign = 1;
     b = createBigInt(5);
     b->sign = 1;
@@ -788,3 +821,4 @@ int main (int argc, char** argv) {
 
     return 0;
 }
+*/
