@@ -182,6 +182,26 @@ struct Fraction *divideFraction(struct Fraction *x, struct Fraction *y) {
     return out;
 }
 
+struct Fraction *factorialFraction(struct Fraction *x) {
+    assert(x->n->sign == 1); // Positive
+    assert(x->n->numBlocksUsed == 1); // Can't handle taking factorial of large numbers
+    assert(x->d->numBlocksUsed == 1 && x->d->blocks[0] == 1); // Denominator is 1
+
+    struct BigInt *n = createBigInt(1);
+    struct BigInt *mult = createBigInt(0);
+
+    for (uint32_t i = 1; i <= x->n->blocks[0]; i++) {
+        mult->blocks[0] = i;
+        replaceBigInt(&n, multiplyBigInt(n, mult));
+    }
+
+    struct Fraction *out = malloc(sizeof(struct Fraction));
+    out->n = n;
+    out->d = createBigInt(1);
+
+    return out;
+}
+
 void printFraction(struct Fraction *f) {
     printBigIntDecimal(f->n);
     printf(" / ");

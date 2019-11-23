@@ -21,6 +21,7 @@ struct Fraction *addFraction(struct Fraction *x, struct Fraction *y);
 struct Fraction *subtractFraction(struct Fraction *x, struct Fraction *y);
 struct Fraction *multiplyFraction(struct Fraction *x, struct Fraction *y);
 struct Fraction *divideFraction(struct Fraction *x, struct Fraction *y);
+struct Fraction *factorialFraction(struct Fraction *x);
 void printFraction(struct Fraction *f);
 
 #endif
