@@ -19,6 +19,7 @@ struct BigIntDigitPair {
 };
 
 struct BigInt* createBigInt(uint32_t value);
+struct BigInt* createFromStringBigInt(char *str);
 struct BigIntPair *createBigIntPair(struct BigInt *x, struct BigInt *y);
 struct BigIntDigitPair *createBigIntDigitPair(struct BigInt *x, uint32_t y);
 

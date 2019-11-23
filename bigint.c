@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <string.h>
 
 #include "bigint.h"
 
@@ -14,6 +15,39 @@ struct BigInt* createBigInt(uint32_t value) {
     *(x->blocks) = value;
 
     return x;
+}
+
+struct BigInt* createFromStringBigInt(char *str) {
+    struct BigInt *multiplier = createBigInt(1);
+    struct BigInt *base = createBigInt(10);
+    struct BigInt *out = createBigInt(0);
+    struct BigInt *digit = createBigInt(0);
+    struct BigInt *temp;
+
+    size_t len = strlen(str);
+    size_t j;
+    char c;
+    for (size_t i = 0; i < len; i++) {
+        j = len - i - 1;
+        c = str[j];
+        if (j == 0 && c == '-') {
+            out->sign = -1;
+        } else {
+            assert('0' <= c && c <= '9');
+            digit->blocks[0] = c - '0';
+            temp = multiplyBigInt(digit, multiplier);
+            replaceBigInt(&out, addBigInt(out, temp));
+            freeBigInt(temp);
+
+            replaceBigInt(&multiplier, multiplyBigInt(multiplier, base));
+        }
+    }
+
+    freeBigInt(multiplier);
+    freeBigInt(base);
+    freeBigInt(digit);
+
+    return out;
 }
 
 struct BigIntPair *createBigIntPair(struct BigInt *x, struct BigInt *y) {

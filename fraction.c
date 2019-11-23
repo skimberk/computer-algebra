@@ -120,10 +120,8 @@ void printFraction(struct Fraction *f) {
 }
 
 int main (int argc, char** argv) {
-    struct BigInt *a = createBigInt(479001600);
-    struct BigInt *b = createBigInt(1048576);
-    a->sign = 1;
-    b->sign = -1;
+    struct BigInt *a = createFromStringBigInt("-479001600");
+    struct BigInt *b = createFromStringBigInt("1048576");
     struct Fraction *f = createFraction(a, b);
     struct Fraction *f1 = invertFraction(f);
 
