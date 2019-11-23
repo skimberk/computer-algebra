@@ -40,6 +40,15 @@ struct Fraction *createFraction(struct BigInt *n, struct BigInt *d) {
     return f;
 }
 
+struct Fraction *createFromStringFraction(char *nStr, char *dStr) {
+    struct BigInt *n = createFromStringBigInt(nStr);
+    struct BigInt *d = createFromStringBigInt(dStr);
+    struct Fraction *out = createFraction(n, d);
+    freeBigInt(n);
+    freeBigInt(d);
+    return out;
+}
+
 void freeFraction(struct Fraction *f) {
     freeBigInt(f->n);
     freeBigInt(f->d);
@@ -120,9 +129,8 @@ void printFraction(struct Fraction *f) {
 }
 
 int main (int argc, char** argv) {
-    struct BigInt *a = createFromStringBigInt("-479001600");
-    struct BigInt *b = createFromStringBigInt("1048576");
-    struct Fraction *f = createFraction(a, b);
+//    struct Fraction *f = createFromStringFraction("-479001600", "1048576");
+    struct Fraction *f = createFromStringFraction("12312", "1291309968");
     struct Fraction *f1 = invertFraction(f);
 
     printFraction(f); printf("\n");
@@ -130,8 +138,6 @@ int main (int argc, char** argv) {
     replaceFraction(&f, divideFraction(f, f));
     printFraction(f); printf("\n");
 
-    freeBigInt(a);
-    freeBigInt(b);
     freeFraction(f);
     freeFraction(f1);
 }
