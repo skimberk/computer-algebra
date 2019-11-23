@@ -11,6 +11,10 @@ struct Fraction {
 };
 
 struct Fraction *createFraction(struct BigInt *n, struct BigInt *d) {
+    validateBigInt(n);
+    validateBigInt(d);
+    assert(!isZeroBigInt(d));
+
     struct Fraction *f = malloc(sizeof(struct Fraction));
     struct BigInt *gcd = gcdBigInt(n, d);
 
@@ -50,6 +54,8 @@ void replaceFraction (struct Fraction **x, struct Fraction *y) {
 // All operations assume that fractions are in simplest form
 
 struct Fraction *invertFraction(struct Fraction *x) {
+    assert(!isZeroBigInt(x->n));
+
     struct Fraction *out = malloc(sizeof(struct Fraction));
     out->n = copyBigInt(x->d);
     out->d = copyBigInt(x->n);
@@ -58,15 +64,6 @@ struct Fraction *invertFraction(struct Fraction *x) {
     out->d->sign = 1;
 
     return out;
-}
-
-void invertInPlaceFraction(struct Fraction *x) {
-    struct BigInt *temp = x->n;
-    x->n = x->d;
-    x->d = temp;
-
-    x->n->sign = x->d->sign;
-    x->d->sign = 1;
 }
 
 struct Fraction *multiplyFraction(struct Fraction *x, struct Fraction *y) {
@@ -96,6 +93,10 @@ struct Fraction *multiplyFraction(struct Fraction *x, struct Fraction *y) {
     // Keep sign on numerator
     a->sign = a->sign * b->sign;
     b->sign = 1;
+
+    if (isZeroBigInt(a)) {
+        a->sign = 1;
+    }
 
     struct Fraction *out = malloc(sizeof(struct Fraction));
     out->n = a;
