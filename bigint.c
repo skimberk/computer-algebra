@@ -486,19 +486,21 @@ struct BigIntDigitPair *divideByDigitBigInt(struct BigInt *x, uint32_t y) {
 //        printf("\n");
     }
 
-    freeBigInt(yBig);
-    freeBigInt(temp);
-    freeBigInt(u);
-
     assert(r->numBlocksUsed == 1);
     uint32_t rDigit = r->blocks[0];
-    freeBigInt(r);
 
     assert(rDigit < y);
     q->sign = x->sign;
     if (x->sign == -1 && rDigit != 0) {
+        temp->blocks[0] = 1;
+        replaceBigInt(&q, subtractBigInt(q, temp));
         rDigit = y - rDigit;
     }
+ 
+    freeBigInt(yBig);
+    freeBigInt(temp);
+    freeBigInt(u);
+    freeBigInt(r);
 
     return createBigIntDigitPair(q, rDigit);
 }
@@ -628,6 +630,8 @@ struct BigIntPair *divideBigInt(struct BigInt *x, struct BigInt *y) {
 
     q->sign = sign;
     if (sign == -1 && !isZeroBigInt(r)) {
+        temp->blocks[0] = 1;
+        replaceBigInt(&q, subtractBigInt(q, temp));
         replaceBigInt(&r, subtractBigInt(y, r));
     }
 
