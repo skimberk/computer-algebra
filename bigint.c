@@ -270,9 +270,10 @@ struct BigInt *subtractBigInt(struct BigInt *x, struct BigInt *y) {
     validateBigInt(x);
     validateBigInt(y);
 
-    flipSignBigInt(y);
-    struct BigInt *out = addBigInt(x, y);
-    flipSignBigInt(y);
+    struct BigInt *yNeg = copyBigInt(y);
+    flipSignBigInt(yNeg);
+    struct BigInt *out = addBigInt(x, yNeg);
+    freeBigInt(yNeg);
 
     return out;
 }
