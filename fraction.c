@@ -49,6 +49,26 @@ void replaceFraction (struct Fraction **x, struct Fraction *y) {
 
 // All operations assume that fractions are in simplest form
 
+struct Fraction *invertFraction(struct Fraction *x) {
+    struct Fraction *out = malloc(sizeof(struct Fraction));
+    out->n = copyBigInt(x->d);
+    out->d = copyBigInt(x->n);
+
+    out->n->sign = out->d->sign;
+    out->d->sign = 1;
+
+    return out;
+}
+
+void invertInPlaceFraction(struct Fraction *x) {
+    struct BigInt *temp = x->n;
+    x->n = x->d;
+    x->d = temp;
+
+    x->n->sign = x->d->sign;
+    x->d->sign = 1;
+}
+
 struct Fraction *multiplyFraction(struct Fraction *x, struct Fraction *y) {
     struct BigInt *a = gcdBigInt(x->n, y->d);
     struct BigInt *b = gcdBigInt(x->d, y->n);
@@ -84,6 +104,14 @@ struct Fraction *multiplyFraction(struct Fraction *x, struct Fraction *y) {
     return out;
 }
 
+struct Fraction *divideFraction(struct Fraction *x, struct Fraction *y) {
+    struct Fraction *y1 = invertFraction(y);
+    struct Fraction *out = multiplyFraction(x, y1);
+    freeFraction(y1);
+
+    return out;
+}
+
 void printFraction(struct Fraction *f) {
     printBigIntDecimal(f->n);
     printf(" / ");
@@ -96,13 +124,15 @@ int main (int argc, char** argv) {
     a->sign = 1;
     b->sign = -1;
     struct Fraction *f = createFraction(a, b);
+    struct Fraction *f1 = invertFraction(f);
 
     printFraction(f); printf("\n");
 
-    replaceFraction(&f, multiplyFraction(f, f));
+    replaceFraction(&f, divideFraction(f, f));
     printFraction(f); printf("\n");
 
     freeBigInt(a);
     freeBigInt(b);
     freeFraction(f);
+    freeFraction(f1);
 }
