@@ -45,7 +45,7 @@ void ensureNumCoeffsPolynomial(struct Polynomial *x, unsigned int numCoeffs) {
     }
 }
 
-struct Polynomial *joinPolynomial(
+struct Polynomial *zipPolynomial(
     struct Polynomial *x,
     struct Polynomial *y,
     struct Fraction *(*func)(struct Fraction*, struct Fraction*)
@@ -65,7 +65,7 @@ struct Polynomial *joinPolynomial(
 
         if (!isZeroBigInt(coeff->n)) {
             ensureNumCoeffsPolynomial(out, i + 1);
-            out->coeffs[i] = coeff;
+            replaceFraction(&out->coeffs[i], coeff);
         } else {
             freeFraction(coeff);
         }
@@ -75,22 +75,50 @@ struct Polynomial *joinPolynomial(
 }
 
 struct Polynomial *addPolynomial(struct Polynomial *x, struct Polynomial *y) {
-    return joinPolynomial(x, y, &addFraction);
+    return zipPolynomial(x, y, &addFraction);
 }
 
 struct Polynomial *subtractPolynomial(struct Polynomial *x, struct Polynomial *y) {
-    return joinPolynomial(x, y, &subtractFraction);
+    return zipPolynomial(x, y, &subtractFraction);
+}
+
+struct Polynomial *multiplyPolynomial(struct Polynomial *x, struct Polynomial *y) {
+    struct Polynomial *out = createPolynomial();
+    struct Fraction *coeff;
+    for (unsigned int i = 0; i < x->numCoeffs; i++) {
+        for (unsigned int j = 0; j < y->numCoeffs; j++) {
+            coeff = multiplyFraction(x->coeffs[i], y->coeffs[j]);
+
+            if (!isZeroBigInt(coeff->n)) {
+                ensureNumCoeffsPolynomial(out, i + j + 1);
+                replaceFraction(&out->coeffs[i + j], addFraction(out->coeffs[i + j], coeff));
+            } else {
+                freeFraction(coeff);
+            }
+        }
+    }
+    
+    return out;
 }
 
 void printPolynomial(struct Polynomial *x) {
     unsigned int j;
+    int firstTerm = 1;
     for (unsigned int i = 0; i < x->numCoeffs; i++) {
         j = x->numCoeffs - i - 1;
-        if (j == 0) {
-            printFraction(x->coeffs[0]);
-        } else {
-            printFraction(x->coeffs[j]);
-            printf(" * x^%u + ", j);
+        if (j == 0 || !isZeroBigInt(x->coeffs[j]->n)) {
+            if (!firstTerm) {
+                printf(" + ");
+            } else {
+                firstTerm = 0;
+            }
+
+            if (j == 0) {
+                printFraction(x->coeffs[0]);
+            } else {
+                printFraction(x->coeffs[j]);
+                printf(" * x^%u", j);
+            }
         }
     }
 }
@@ -104,5 +132,15 @@ int main (int argc, char** argv) {
     printPolynomial(addPolynomial(p, p)); printf("\n");
     ensureNumCoeffsPolynomial(p, 4);
     p->coeffs[2] = createFromStringFraction("1", "3");
-    printPolynomial(subtractPolynomial(p, p)); printf("\n");
+    printPolynomial(p); printf("\n");
+    p = multiplyPolynomial(p, p);
+    printPolynomial(p); printf("\n");
+    p = multiplyPolynomial(p, p);
+    printPolynomial(p); printf("\n");
+    p = multiplyPolynomial(p, p);
+    printPolynomial(p); printf("\n");
+    p = multiplyPolynomial(p, p);
+    printPolynomial(p); printf("\n");
+    p = multiplyPolynomial(p, p);
+    printPolynomial(p); printf("\n");
 }
