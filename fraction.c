@@ -129,7 +129,7 @@ struct Fraction *addFraction(struct Fraction *x, struct Fraction *y) {
 
 struct Fraction *subtractFraction(struct Fraction *x, struct Fraction *y) {
     struct Fraction *yNeg = copyFraction(y);
-    flipSignBigInt(y->n);
+    flipSignBigInt(yNeg->n);
     struct Fraction *out = addFraction(x, yNeg);
     freeFraction(yNeg);
     return out;
@@ -235,7 +235,7 @@ struct Fraction *factorialFraction(struct Fraction *x) {
 
 void printFraction(struct Fraction *f) {
     printBigIntDecimal(f->n);
-    printf(" / ");
+    printf("/");
     printBigIntDecimal(f->d);
 }
 
