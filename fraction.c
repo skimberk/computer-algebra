@@ -117,6 +117,9 @@ struct Fraction *addFraction(struct Fraction *x, struct Fraction *y) {
     out->d = multiplyBigInt(b1, d);
 
     correctSignFraction(out);
+    if (isZeroBigInt(out->n)) {
+        replaceBigInt(&out->d, createBigInt(1));
+    }
 
     freeBigInt(a);
     freeBigInt(b1);
