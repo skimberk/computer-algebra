@@ -182,6 +182,37 @@ struct Fraction *divideFraction(struct Fraction *x, struct Fraction *y) {
     return out;
 }
 
+struct Fraction *exponentFraction(struct Fraction *x, struct Fraction *y) {
+    assert(y->n->sign == 1); // Positive
+    assert(y->d->numBlocksUsed == 1 && y->d->blocks[0] == 1); // Denominator is 1
+
+    struct BigInt *n = copyBigInt(y->n);
+    struct Fraction *out = createFromStringFraction("1", "1");
+    struct Fraction *z = copyFraction(x);
+
+    struct BigIntDigitPair *pair;
+
+    while (!isZeroBigInt(n)) {
+        pair = divideByDigitBigInt(n, 2);
+        replaceBigInt(&n, pair->x);
+
+        if (pair->y == 1) {
+            replaceFraction(&out, multiplyFraction(out, z));
+        }
+
+        free(pair);
+
+        if (!isZeroBigInt(n)) {
+            replaceFraction(&z, multiplyFraction(z, z));
+        }
+    }
+
+    freeBigInt(n);
+    freeFraction(z);
+
+    return out;
+}
+
 struct Fraction *factorialFraction(struct Fraction *x) {
     assert(x->n->sign == 1); // Positive
     assert(x->n->numBlocksUsed == 1); // Can't handle taking factorial of large numbers

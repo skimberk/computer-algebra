@@ -42,20 +42,27 @@ struct Fraction *evalExpr(char *expr, struct Fraction *lastResult) {
             pushFractionStack(&stack, multiplyFraction(temp1, temp2));
             freeFraction(temp1);
             freeFraction(temp2);
-         } else if (strcmp(token, "/") == 0) {
+        } else if (strcmp(token, "/") == 0) {
             // Order of pops is important
             temp2 = popFractionStack(&stack);
             temp1 = popFractionStack(&stack);
             pushFractionStack(&stack, divideFraction(temp1, temp2));
             freeFraction(temp1);
             freeFraction(temp2);
-         } else if (strcmp(token, "+") == 0) {
+        } else if (strcmp(token, "^") == 0) {
+            // Order of pops is important
+            temp2 = popFractionStack(&stack);
+            temp1 = popFractionStack(&stack);
+            pushFractionStack(&stack, exponentFraction(temp1, temp2));
+            freeFraction(temp1);
+            freeFraction(temp2);
+        } else if (strcmp(token, "+") == 0) {
             temp2 = popFractionStack(&stack);
             temp1 = popFractionStack(&stack);
             pushFractionStack(&stack, addFraction(temp1, temp2));
             freeFraction(temp1);
             freeFraction(temp2);
-         } else if (strcmp(token, "-") == 0) {
+        } else if (strcmp(token, "-") == 0) {
             // Order of pops is important
             temp2 = popFractionStack(&stack);
             temp1 = popFractionStack(&stack);
@@ -68,6 +75,9 @@ struct Fraction *evalExpr(char *expr, struct Fraction *lastResult) {
             freeFraction(temp1);
         } else if (strcmp(token, "%") == 0) {
             pushFractionStack(&stack, copyFraction(lastResult));
+        } else if (strcmp(token, "quit") == 0) {
+            freeFraction(lastResult);
+            exit(0);
         } else {
             pushFractionStack(&stack, createFromStringFraction(token, "1"));
         }
@@ -92,14 +102,16 @@ int main (int argc, char** argv) {
     printf("*** Welcome to Sebastian's calculator!\n");
     printf("*** Sample expressions: 1 2 * -3 *\n");
     printf("***                     1000 ! 99 ! /\n");
+    printf("***                     1 2 / 2 14 ^ ^\n");
     printf("*** Rules:\n");
     printf("*** - enter expressions in postfix (i.e. Reverse Polish Notation)\n");
     printf("*** - all tokens should be separated by a single space\n");
-    printf("*** - binary operators: +, -, *, and / (basic arithmetic)\n");
+    printf("*** - binary operators: +, -, *, /, and ^ (basic arithmetic)\n");
     printf("*** - unary operators: ! (takes factorial)\n");
     printf("*** - only integers are allowed, obtain rationals using division\n");
     printf("*** - use %% in place of an integer to access the result of the\n");
     printf("***   last expression to be evaluated\n");
+    printf("*** - enter quit to quit\n");
     printf("******************************************************************\n");
 
     while (1) {
