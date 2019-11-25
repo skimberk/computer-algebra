@@ -104,12 +104,13 @@ int main (int argc, char** argv) {
     printf("*** Sample expressions: 1 2 * -3 *\n");
     printf("***                     1000 ! 99 ! /\n");
     printf("***                     1 2 / 2 14 ^ ^\n");
+    printf("***                     -3/5 -11/7 +\n");
     printf("*** Rules:\n");
     printf("*** - enter expressions in postfix (i.e. Reverse Polish Notation)\n");
     printf("*** - all tokens should be separated by a single space\n");
     printf("*** - binary operators: +, -, *, /, and ^ (basic arithmetic)\n");
     printf("*** - unary operators: ! (takes factorial)\n");
-    printf("*** - only integers are allowed, obtain rationals using division\n");
+    printf("*** - fraction literals look like p/q, negatives like -x\n");
     printf("*** - use %% in place of an integer to access the result of the\n");
     printf("***   last expression to be evaluated\n");
     printf("*** - enter quit to quit\n");

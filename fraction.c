@@ -249,6 +249,8 @@ struct Fraction *factorialFraction(struct Fraction *x) {
         replaceBigInt(&n, multiplyBigInt(n, mult));
     }
 
+    freeBigInt(mult);
+
     struct Fraction *out = malloc(sizeof(struct Fraction));
     out->n = n;
     out->d = createBigInt(1);
