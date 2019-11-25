@@ -26,3 +26,11 @@ Also, I did all my compiling and testing on mirage, so ideally compile there!
 It'll probably work elsewhere too, but no promises! The only potentially
 unportable things I do (which I can think of) are using uint32_t, doing 64 bit
 multiplication/division, and using strtok_r. But even those should be pretty portable!
+
+I used the following two books as references for algorithms/general implementation details:
+
+Lamagna, Edmund A. Computer Algebra : Concepts and Techniques . Boca Raton,
+Florida: CRC Press, 2019. Print.
+
+Geddes, K. O. (Keith O.), Czapor, S. R. , and Labahn, G. . Algorithms for Computer
+Algebra . Boston: Kluwer Academic, 1992. Print.
