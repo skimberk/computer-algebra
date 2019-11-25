@@ -2,8 +2,19 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <string.h>
 
 #include "fraction.h"
+
+void correctSignFraction(struct Fraction *x) {
+    // Keep sign on numerator
+    x->n->sign = x->n->sign * x->d->sign;
+    x->d->sign = 1;
+
+    if (isZeroBigInt(x->d)) {
+        x->d->sign = 1;
+    }
+}
 
 struct Fraction *createFraction(struct BigInt *n, struct BigInt *d) {
     validateBigInt(n);
@@ -27,8 +38,7 @@ struct Fraction *createFraction(struct BigInt *n, struct BigInt *d) {
     freeBigInt(pair->y);
     free(pair);
 
-    f->n->sign = f->n->sign * f->d->sign;
-    f->d->sign = 1;
+    correctSignFraction(f);
 
     freeBigInt(gcd);
 
@@ -42,6 +52,22 @@ struct Fraction *createFromStringFraction(char *nStr, char *dStr) {
     freeBigInt(n);
     freeBigInt(d);
     return out;
+}
+
+struct Fraction *createFromSingleStringFraction(char *str) {
+    char *saveptr; // for strtok_r
+    char *nStr = strtok_r(str, "/", &saveptr);
+    char *dStr = strtok_r(NULL, "/", &saveptr);
+
+    assert(nStr != NULL);
+    assert(strtok_r(NULL, "/", &saveptr) == NULL); // No more tokens
+    
+    if (dStr == NULL) {
+        // No denominator
+        return createFromStringFraction(nStr, "1");
+    }
+
+    return createFromStringFraction(nStr, dStr);
 }
 
 struct Fraction *copyFraction(struct Fraction *x) {
@@ -65,16 +91,6 @@ void replaceFraction (struct Fraction **x, struct Fraction *y) {
 
 // All operations assume that fractions are in simplest form
 
-void correctSignFraction(struct Fraction *x) {
-    // Keep sign on numerator
-    x->n->sign = x->n->sign * x->d->sign;
-    x->d->sign = 1;
-
-    if (isZeroBigInt(x->d)) {
-        x->d->sign = 1;
-    }
-}
-
 struct Fraction *invertFraction(struct Fraction *x) {
     assert(!isZeroBigInt(x->n));
 
@@ -82,8 +98,7 @@ struct Fraction *invertFraction(struct Fraction *x) {
     out->n = copyBigInt(x->d);
     out->d = copyBigInt(x->n);
 
-    out->n->sign = out->d->sign;
-    out->d->sign = 1;
+    correctSignFraction(out);
 
     return out;
 }
@@ -116,16 +131,27 @@ struct Fraction *addFraction(struct Fraction *x, struct Fraction *y) {
     out->n = addBigInt(a, c);
     out->d = multiplyBigInt(b1, d);
 
-    correctSignFraction(out);
-    if (isZeroBigInt(out->n)) {
-        replaceBigInt(&out->d, createBigInt(1));
-    }
+    replaceBigInt(&gcd, gcdBigInt(out->n, gcd));
+
+    pair = divideBigInt(out->n, gcd);
+    assert(isZeroBigInt(pair->y));
+    replaceBigInt(&out->n, pair->x);
+    freeBigInt(pair->y);
+    free(pair);
+
+    pair = divideBigInt(out->d, gcd);
+    assert(isZeroBigInt(pair->y));
+    replaceBigInt(&out->d, pair->x);
+    freeBigInt(pair->y);
+    free(pair);
 
     freeBigInt(a);
     freeBigInt(b1);
     freeBigInt(c);
     freeBigInt(d1);
     freeBigInt(gcd);
+
+    correctSignFraction(out);
 
     return out;
 }
@@ -162,17 +188,11 @@ struct Fraction *multiplyFraction(struct Fraction *x, struct Fraction *y) {
 
     freeBigInt(gcd);
  
-    // Keep sign on numerator
-    a->sign = a->sign * b->sign;
-    b->sign = 1;
-
-    if (isZeroBigInt(a)) {
-        a->sign = 1;
-    }
-
     struct Fraction *out = malloc(sizeof(struct Fraction));
     out->n = a;
     out->d = b;
+
+    correctSignFraction(out);
 
     return out;
 }

@@ -30,7 +30,8 @@ struct Fraction *popFractionStack(struct FractionStack **stack) {
 }
 
 struct Fraction *evalExpr(char *expr, struct Fraction *lastResult) {
-    char *token = strtok(expr, " ");
+    char *saveptr; // for strtok_r
+    char *token = strtok_r(expr, " ", &saveptr);
     struct FractionStack *stack = NULL;
     struct Fraction *temp1;
     struct Fraction *temp2;
@@ -79,10 +80,10 @@ struct Fraction *evalExpr(char *expr, struct Fraction *lastResult) {
             freeFraction(lastResult);
             exit(0);
         } else {
-            pushFractionStack(&stack, createFromStringFraction(token, "1"));
+            pushFractionStack(&stack, createFromSingleStringFraction(token));
         }
 
-        token = strtok(NULL, " ");
+        token = strtok_r(NULL, " ", &saveptr);
     }
 
     temp1 = popFractionStack(&stack);

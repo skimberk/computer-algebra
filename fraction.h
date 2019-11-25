@@ -10,6 +10,7 @@ struct Fraction {
 
 struct Fraction *createFraction(struct BigInt *n, struct BigInt *d);
 struct Fraction *createFromStringFraction(char *nStr, char *dStr);
+struct Fraction *createFromSingleStringFraction(char *str);
 struct Fraction *copyFraction(struct Fraction *x);
 void freeFraction(struct Fraction *f);
 void replaceFraction (struct Fraction **x, struct Fraction *y);
