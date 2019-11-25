@@ -45,6 +45,48 @@ void ensureNumCoeffsPolynomial(struct Polynomial *x, unsigned int numCoeffs) {
     }
 }
 
+void freePolynomial(struct Polynomial *x) {
+    for (unsigned int i = 0; i < x->numCoeffs; i++) {
+        freeFraction(x->coeffs[i]);
+    }
+    free(x->coeffs);
+    free(x);
+}
+
+void replacePolynomial(struct Polynomial **x, struct Polynomial *y) {
+    freePolynomial(*x);
+    *x = y;
+}
+
+struct Polynomial *createFromStringPolynomial(char *strin) {
+    char *str = malloc((strlen(strin) + 1) * sizeof(char));
+    strcpy(str, strin);
+
+    struct Polynomial *out = createPolynomial();
+
+    char *saveptr; // for strtok_r
+    char *token = strtok_r(str, " ", &saveptr);
+    struct Fraction *coeff;
+
+    unsigned int i = 0;
+    while (token != NULL) {
+        coeff = createFromSingleStringFraction(token);
+
+        if (!isZeroBigInt(coeff->n)) {
+            ensureNumCoeffsPolynomial(out, i + 1);
+            replaceFraction(&out->coeffs[i], coeff);
+        } else {
+            freeFraction(coeff);
+        }
+
+        token = strtok_r(NULL, " ", &saveptr);
+        i++;
+    }
+    free(str);
+
+    return out;
+}
+
 struct Polynomial *zipPolynomial(
     struct Polynomial *x,
     struct Polynomial *y,
@@ -124,23 +166,34 @@ void printPolynomial(struct Polynomial *x) {
 }
 
 int main (int argc, char** argv) {
-    struct Polynomial *p = malloc(sizeof(struct Polynomial));
-    p->numCoeffs = 1;
-    p->numCoeffsAllocated = 1;
-    p->coeffs = malloc(sizeof(struct Fraction*));
-    p->coeffs[0] = createFromStringFraction("12", "10");
-    printPolynomial(addPolynomial(p, p)); printf("\n");
-    ensureNumCoeffsPolynomial(p, 4);
-    p->coeffs[2] = createFromStringFraction("1", "3");
+    struct Polynomial *p = createFromStringPolynomial("-6/14 1 0 0 0 13");
     printPolynomial(p); printf("\n");
-    p = multiplyPolynomial(p, p);
+
+    replacePolynomial(&p, multiplyPolynomial(p, p));
     printPolynomial(p); printf("\n");
-    p = multiplyPolynomial(p, p);
+
+    replacePolynomial(&p, addPolynomial(p, p));
     printPolynomial(p); printf("\n");
-    p = multiplyPolynomial(p, p);
-    printPolynomial(p); printf("\n");
-    p = multiplyPolynomial(p, p);
-    printPolynomial(p); printf("\n");
-    p = multiplyPolynomial(p, p);
-    printPolynomial(p); printf("\n");
+
+    freePolynomial(p);
+
+//    struct Polynomial *p = malloc(sizeof(struct Polynomial));
+//    p->numCoeffs = 1;
+//    p->numCoeffsAllocated = 1;
+//    p->coeffs = malloc(sizeof(struct Fraction*));
+//    p->coeffs[0] = createFromStringFraction("12", "10");
+//    printPolynomial(addPolynomial(p, p)); printf("\n");
+//    ensureNumCoeffsPolynomial(p, 4);
+//    p->coeffs[2] = createFromStringFraction("1", "3");
+//    printPolynomial(p); printf("\n");
+//    p = multiplyPolynomial(p, p);
+//    printPolynomial(p); printf("\n");
+//    p = multiplyPolynomial(p, p);
+//    printPolynomial(p); printf("\n");
+//    p = multiplyPolynomial(p, p);
+//    printPolynomial(p); printf("\n");
+//    p = multiplyPolynomial(p, p);
+//    printPolynomial(p); printf("\n");
+//    p = multiplyPolynomial(p, p);
+//    printPolynomial(p); printf("\n");
 }

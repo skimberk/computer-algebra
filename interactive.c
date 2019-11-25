@@ -111,7 +111,7 @@ int main (int argc, char** argv) {
     printf("*** - binary operators: +, -, *, /, and ^ (basic arithmetic)\n");
     printf("*** - unary operators: ! (takes factorial)\n");
     printf("*** - fraction literals look like p/q, negatives like -x\n");
-    printf("*** - use %% in place of an integer to access the result of the\n");
+    printf("*** - use %% in place of an integer/fraction to access the result of the\n");
     printf("***   last expression to be evaluated\n");
     printf("*** - enter quit to quit\n");
     printf("******************************************************************\n");
